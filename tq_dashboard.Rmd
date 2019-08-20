@@ -1,0 +1,82 @@
+---
+title: "Stock Trends"
+output: flexdashboard::flex_dashboard
+runtime: shiny
+---
+
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyquant)
+library(lubridate)
+library(highcharter)
+library(timetk)
+```
+
+Inputs {.sidebar}
+-------------------------------------
+
+### Inputs
+
+```{r}
+# shiny inputs defined here
+
+shiny::textInput(inputId = 'ticker', label = 'Stock Ticker', value = 'AMZN')
+
+shiny::numericInput(inputId = 'fastma', label = 'Fast MA', value = 20)
+
+shiny::numericInput(inputId = 'slowma', label = 'Slow MA', value = 200)
+
+actionButton('do', 'Get Chart')
+```
+ 
+Column
+-------------------------------------
+    
+### Stock Chart
+    
+```{r}
+
+inputData <- eventReactive(input$do, {
+input_data <- tq_get(input$ticker, get = "stock.prices", from='2016-01-01') %>%
+  filter(!is.na(close)) %>%
+  tq_mutate(select     = close, 
+            mutate_fun = MACD, 
+            percent = FALSE,
+            col_rename = c("MACD", "Signal")) %>%
+  tq_mutate(select = close,
+            mutate_fun = RSI) %>%
+  tq_mutate(select = close,
+            mutate_fun = SMA, 
+            n=input$fastma,
+            col_rename='smafast') %>%
+  tq_mutate(select = close,
+            mutate_fun = SMA, 
+            n=input$slowma,
+            col_rename='smaslo') %>%
+  mutate(rsi_buy=30, rsi_sell=70) %>%
+  tk_xts() 
+})
+
+
+
+
+renderHighchart({
+highchart(type = 'stock') %>%
+  hc_yAxis_multiples(
+    create_yaxis(3, height = c(2, 1, 1), turnopposite = TRUE)
+  ) %>% 
+  hc_add_series(inputData(), yAxis = 0, name = "CMG") %>% 
+  hc_add_series(inputData()$smafast, yAxis = 0, name = "Fast MA") %>% 
+  hc_add_series(inputData()$smaslo, yAxis = 0, name = "Slow MA") %>% 
+  hc_add_series(inputData()$MACD, yAxis = 1, name = "MACD") %>% 
+  hc_add_series(inputData()$Signal, yAxis = 1, name = "Signal") %>% 
+  hc_add_series(inputData()$rsi, yAxis = 2, name = "Osciallator", color = hex_to_rgba("green", 0.7)) %>%
+  hc_add_series(inputData()$rsi_sell, color = hex_to_rgba("red", 0.7),
+                yAxis = 2, name = "Sell level") %>% 
+  hc_add_series(inputData()$rsi_buy, color = hex_to_rgba("blue", 0.7),
+                yAxis = 2, name = "Buy level") %>%
+     hc_add_theme(hc_theme_monokai())
+})
+  
+```
