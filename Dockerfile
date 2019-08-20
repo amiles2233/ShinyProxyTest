@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y \
     libssl1.0.0
 
 # basic shiny functionality
-RUN R -e "install.packages(c('shiny', 'rmarkdown', 'flexdashboard), repos='https://cloud.r-project.org/')"
+RUN R -e "install.packages(c('shiny', 'rmarkdown', 'flexdashboard'), repos='https://cloud.r-project.org/')"
 
 # install dependencies of the stock app
 RUN R -e "install.packages(c('tidyquant', 'highcharter', 'lubridate', 'timetk'), repos='https://cloud.r-project.org/')"
