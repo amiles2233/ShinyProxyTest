@@ -7,13 +7,8 @@ RUN apt-get update && apt-get install -y \
     sudo \
     pandoc \
     pandoc-citeproc \
-    libcurl4-gnutls-dev \
-    libcairo2-dev \
-    libxt-dev \
-    libssl-dev \
-    libssh2-1-dev \
-    libssl1.0.0
-
+    libxt-dev 
+    
 # basic shiny functionality
 RUN R -e "install.packages(c('shiny', 'rmarkdown', 'flexdashboard'), repos='https://cloud.r-project.org/')"
 
